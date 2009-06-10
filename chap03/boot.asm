@@ -54,12 +54,6 @@ read:
 	mov	gs, bx
 	mov	ss, bx
 	
-;; 	db	0x66
-;; 	db	0x67
-;; 	db	0xEA
-;; 	dd	PM_Start
-;; 	dw	SysCodeSelector
-
 	jmp	dword SysCodeSelector:0x0000
 
 msgBack	db	' ', 0x67
