@@ -35,6 +35,11 @@ read:
 
 	jc	read
 
+;;; turn off the motor of FDD drive
+	mov	dx, 0x3F2
+	xor	al, al
+	out	dx, al
+
 	cli			;clear interrupt flag
 
 	lgdt	[gdtr]		;load global/interrupt descriptor table

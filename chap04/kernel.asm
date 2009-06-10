@@ -4,7 +4,7 @@
 [bits 32]
 
 PM_Start:
-;	jmp $
+;;; initialize segment registers
 	mov	bx, SysDataSelector
 	mov	ds, bx
 	mov	es, bx
@@ -12,35 +12,91 @@ PM_Start:
 	mov	gs, bx
 	mov	ss, bx
 
-	xor	eax, eax
-	mov	ax, VideoSelector
-	mov	es, ax
-	mov	edi, 80*2*10+2*10
-	lea	esi, [ds:msgPMode]
+	lea	esp, [PM_Start]
+
+	mov	edi, 0
+	lea	esi, [msgPMode]
 	call	printf
 
+	cld			;?
+	mov	ax, SysDataSelector
+	mov	es, ax
+	xor	eax, eax
+	xor	ecx, ecx
+	mov	ax, 256
+	mov	edi, 0
+
+loop_idt:
+	lea	esi, [idt_ignore]
+	mov	cx, 8
+	rep	movsb
+	dec	ax
+	jnz	loop_idt
+
+	lidt	[idtr]
+
+	sti
+	int	0x77
 	jmp	$
 
-	;; Subroutines
-
 printf:
-	push eax
+	push	eax
+	push	es
+	mov	ax, VideoSelector
+	mov	es, ax
 
 printf_loop:
-	or	al, al
-	jz	printf_end
 	mov	al, byte [esi]
 	mov	byte [es:edi], al
 	inc	edi
 	mov	byte [es:edi], 0x06
 	inc	esi
 	inc	edi
+	or	al, al
+	jz	printf_end
 	jmp	printf_loop
 
 printf_end:
+	pop	es
 	pop	eax
 	ret
 
 msgPMode	db	"We are in Protected Mode", 0
+msg_isr_ignore	db	"This is an ignorable interrupt", 0
+msg_isr_32_timer	db	".This is the timer interrupt", 0
+
+isr_ignore:
+	push	gs
+	push	fs
+	push	es
+	push	ds
+	pushad
+	pushfd
+
+	mov	ax, VideoSelector
+	mov	es, ax
+	mov	edi, (80*7*2)
+	lea	esi, [msg_isr_ignore]
+	call	printf
+
+	popfd
+	popad
+	pop	ds
+	pop	es
+	pop	fs
+	pop	gs
+
+	iret
+
+idtr:
+	dw	256*8-1
+	dd	0
+
+idt_ignore:
+	dw	isr_ignore
+	dw	SysCodeSelector
+	db	0
+	db	0x8E
+	dw	0x0001
 
 	;; GDT Table
