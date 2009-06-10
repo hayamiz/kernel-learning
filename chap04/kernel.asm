@@ -39,11 +39,18 @@ loop_idt:
 	mov	cx, 8
 	rep	movsb
 
+;;; keyboard interrupt discriptor
+	mov	edi, 8*0x21
+	lea	esi, [idt_keyboard]
+	mov	cx, 8
+	rep	movsb
+
 	lidt	[idtr]
 
-	mov	al, 0xFE
+	mov	al, 0xFC
 	out	0x21, al
 	sti
+	
 	jmp	$
 
 printf:
@@ -71,6 +78,7 @@ printf_end:
 msgPMode	db	"We are in Protected Mode", 0
 msg_isr_ignore	db	"This is an ignorable interrupt", 0
 msg_isr_32_timer	db	".This is the timer interrupt", 0
+msg_isr_33_keyboard	db	".This is the keyboard interrupt", 0
 
 isr_ignore:
 	push	gs
@@ -108,6 +116,35 @@ isr_32_timer:
 
 	mov	ax, VideoSelector
 	mov	es, ax
+	mov	edi, (80*4*2)
+	lea	esi, [msg_isr_33_keyboard]
+	call	printf
+	inc	byte [msg_isr_33_keyboard]
+
+	popfd
+	popad
+	pop	ds
+	pop	es
+	pop	fs
+	pop	gs
+
+	iret
+
+isr_33_keyboard:
+	push	gs
+	push	fs
+	push	es
+	push	ds
+	pushad
+	pushfd
+
+	in	al, 0x60
+
+	mov	al, 0x20
+	out	0x20, al
+
+	mov	ax, VideoSelector
+	mov	es, ax
 	mov	edi, (80*2*2)
 	lea	esi, [msg_isr_32_timer]
 	call	printf
@@ -121,7 +158,7 @@ isr_32_timer:
 	pop	gs
 
 	iret
-
+	
 
 idtr:
 	dw	256*8-1
@@ -140,5 +177,11 @@ idt_timer:
 	db	0
 	db	0x8E
 	dw	0x0001
-	
+
+idt_keyboard:
+	dw	isr_33_keyboard
+	dw	SysCodeSelector
+	db	0
+	db	0x8E
+	dw	0x0001
 	;; GDT Table
