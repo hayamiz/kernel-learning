@@ -41,19 +41,18 @@ read:
 
 	mov	eax, cr0
 	or	eax, 0x00000001
-	;or	eax, 0b111111111101011111111110000001	; break the reserved bit(7th)
 	mov	cr0, eax
 
 	jmp $+3		;flush pipeline
 	nop
 	nop
 
-;; 	mov	bx, SysDataSelector
-;; 	mov	ds, bx
-;; 	mov	es, bx
-;; 	mov	fs, bx
-;; 	mov	gs, bx
-;; 	mov	ss, bx
+	mov	bx, SysDataSelector
+	mov	ds, bx
+	mov	es, bx
+	mov	fs, bx
+	mov	gs, bx
+	mov	ss, bx
 	
 ;; 	db	0x66
 ;; 	db	0x67
@@ -61,15 +60,14 @@ read:
 ;; 	dd	PM_Start
 ;; 	dw	SysCodeSelector
 
-	jmp	dword SysDataSelector:0x0
+	jmp	dword SysCodeSelector:0x0000
 
 msgBack	db	' ', 0x67
-msgContinue	db	"Press any key to continue", 0
 
 	
 gdtr:
 	dw	gdt_end - gdt - 1
-	dd	gdt+0x10000
+	dd	gdt+0x7C00
 
 gdt:
 	;; null segment discriptor

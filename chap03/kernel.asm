@@ -4,7 +4,7 @@
 [bits 32]
 
 PM_Start:
-	jmp $
+;	jmp $
 	mov	bx, SysDataSelector
 	mov	ds, bx
 	mov	es, bx
