@@ -33,10 +33,17 @@ loop_idt:
 	dec	ax
 	jnz	loop_idt
 
+;;; timer interrupt discriptor
+	mov	edi, 8*0x20
+	lea	esi, [idt_timer]
+	mov	cx, 8
+	rep	movsb
+
 	lidt	[idtr]
 
+	mov	al, 0xFE
+	out	0x21, al
 	sti
-	int	0x77
 	jmp	$
 
 printf:
@@ -88,6 +95,34 @@ isr_ignore:
 
 	iret
 
+isr_32_timer:
+	push	gs
+	push	fs
+	push	es
+	push	ds
+	pushad
+	pushfd
+
+	mov	al, 0x20
+	out	0x20, al
+
+	mov	ax, VideoSelector
+	mov	es, ax
+	mov	edi, (80*2*2)
+	lea	esi, [msg_isr_32_timer]
+	call	printf
+	inc	byte [msg_isr_32_timer]
+
+	popfd
+	popad
+	pop	ds
+	pop	es
+	pop	fs
+	pop	gs
+
+	iret
+
+
 idtr:
 	dw	256*8-1
 	dd	0
@@ -99,4 +134,11 @@ idt_ignore:
 	db	0x8E
 	dw	0x0001
 
+idt_timer:
+	dw	isr_32_timer
+	dw	SysCodeSelector
+	db	0
+	db	0x8E
+	dw	0x0001
+	
 	;; GDT Table
