@@ -8,6 +8,13 @@ start:
 	mov	ds, ax
 	mov	es, ax
 
+reset:
+	mov	ax, 0
+	mov	dl, 0
+	int	13h
+	jc	reset		;reset FDD
+
+	
 	mov	ax, 0xB800	; segment addr of video memory
 	mov	es, ax
 	mov	di, 0
@@ -42,7 +49,41 @@ read:
 
 	cli			;clear interrupt flag
 
-	lgdt	[gdtr]		;load global/interrupt descriptor table
+;;; PIC init
+	mov	al, 0x11
+	out	0x20, al
+	dw	0x00eb, 0x00eb
+	out	0xA0, al
+	dw	0x00eb, 0x00eb
+
+	mov	al, 0x20
+	out	0x21, al
+	dw	0x00eb, 0x00eb
+	mov	al, 0x28
+	out	0xA1, al
+	dw	0x00eb, 0x00eb
+
+	mov	al, 0x04
+	out	0x21, al
+	dw	0x00eb, 0x00eb
+	mov	al, 0x02
+	out	0xA1, al
+	dw	0x00eb, 0x00eb
+
+	mov	al, 0x01
+	out	0x21, al
+	dw	0x00eb, 0x00eb
+	out	0xA1, al
+	dw	0x00eb, 0x00eb
+
+	mov	al, 0xff
+	out	0xA1, al
+	dw	0x00eb, 0x00eb
+	mov	al, 0xFB
+	out	0x21, al
+
+;;; load global descriptor table
+	lgdt	[gdtr]
 
 	mov	eax, cr0
 	or	eax, 0x00000001
